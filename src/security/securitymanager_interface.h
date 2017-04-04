@@ -53,7 +53,6 @@ bool unpinCertificate(const std::string& certId);
 void pinCertificatePath(const std::string& path);
 unsigned unpinCertificatePath(const std::string& path);
 
-bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
 bool setCertificateStatus(const std::string& account, const std::string& certId, const std::string& status);
 std::vector<std::string> getCertificatesByStatus(const std::string& account, const std::string& status);
 

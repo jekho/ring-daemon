@@ -135,14 +135,6 @@ unpinCertificatePath(const std::string& path)
 }
 
 bool
-pinRemoteCertificate(const std::string& accountId, const std::string& certId)
-{
-    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
-        return acc->findCertificate(certId);
-    return false;
-}
-
-bool
 setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
 {
     try {
