@@ -48,12 +48,126 @@
 
 namespace ring { namespace tls {
 
-using ring::SIPAccount;
 using ring::RingAccount;
 using ring::tls::TlsValidator;
 using ring::tls::CertificateStore;
-using ring::DeviceType;
-using ring::HookPreference;
 
+std::map<std::string, std::string>
+validateCertificate(const std::string&,
+                    const std::string& certificate)
+{
+    try {
+        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed: %s", e.what());
+        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+    }
+}
+
+std::map<std::string, std::string>
+validateCertificatePath(const std::string&,
+                    const std::string& certificate,
+                    const std::string& privateKey,
+                    const std::string& privateKeyPass,
+                    const std::string& caList)
+{
+    try {
+        return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed: %s", e.what());
+        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+    }
+}
+
+std::map<std::string, std::string>
+getCertificateDetails(const std::string& certificate)
+{
+    try {
+        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed: %s", e.what());
+    }
+    return {};
+}
+
+std::map<std::string, std::string>
+getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
+{
+    try {
+        auto crt = std::make_shared<dht::crypto::Certificate>(ring::fileutils::loadFile(certificate));
+        TlsValidator validator {certificate, privateKey, privateKeyPassword};
+        CertificateStore::instance().pinCertificate(validator.getCertificate(), false);
+        return validator.getSerializedDetails();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed: %s", e.what());
+    }
+    return {};
+}
+
+std::vector<std::string>
+getPinnedCertificates()
+{
+    return ring::tls::CertificateStore::instance().getPinnedCertificates();
+}
+
+std::vector<std::string>
+pinCertificate(const std::vector<uint8_t>& certificate, bool local)
+{
+    return ring::tls::CertificateStore::instance().pinCertificate(certificate, local);
+}
+
+void
+pinCertificatePath(const std::string& path)
+{
+    ring::tls::CertificateStore::instance().pinCertificatePath(path);
+}
+
+bool
+unpinCertificate(const std::string& certId)
+{
+    return ring::tls::CertificateStore::instance().unpinCertificate(certId);
+}
+
+unsigned
+unpinCertificatePath(const std::string& path)
+{
+    return ring::tls::CertificateStore::instance().unpinCertificatePath(path);
+}
+
+bool
+pinRemoteCertificate(const std::string& accountId, const std::string& certId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->findCertificate(certId);
+    return false;
+}
+
+bool
+setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
+{
+    try {
+        if (accountId.empty()) {
+            ring::tls::CertificateStore::instance().setTrustedCertificate(certId, ring::tls::trustStatusFromStr(ststr.c_str()));
+        } else if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId)) {
+            try {
+                auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
+                return acc->setCertificateStatus(certId, status);
+            } catch (const std::out_of_range&) {
+                auto status = ring::tls::trustStatusFromStr(ststr.c_str());
+                return acc->setCertificateStatus(certId, status);
+            }
+        }
+    } catch (const std::out_of_range&) {}
+    return false;
+}
+
+std::vector<std::string>
+getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
+{
+     auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getCertificatesByStatus(status);
+    return {};
+}
 
 }} // namespace ring::tls

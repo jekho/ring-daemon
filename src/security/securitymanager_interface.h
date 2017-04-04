@@ -27,7 +27,7 @@
 #include <cstdint>
 
 #include "dring.h"
-#include "security_const.h"
+#include "dring/security_const.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
