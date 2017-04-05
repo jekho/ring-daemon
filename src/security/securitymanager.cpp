@@ -23,12 +23,14 @@
 #endif
 
 #include "securitymanager_interface.h"
+#include "manager.h"
 #include "tlsvalidator.h"
 #include "certstore.h"
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
 #include "ip_utils.h"
+#include "ringdht/ringaccount.h"
 #include "client/ring_signal.h"
 #include "upnp/upnp_context.h"
 
@@ -60,7 +62,7 @@ validateCertificate(const std::string&,
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
-        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+        return {{DRing::Certificate::ChecksNames::EXIST, DRing::Certificate::CheckValuesNames::FAILED}};
     }
 }
 
@@ -75,7 +77,7 @@ validateCertificatePath(const std::string&,
         return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
-        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+        return {{DRing::Certificate::ChecksNames::EXIST, DRing::Certificate::CheckValuesNames::FAILED}};
     }
 }
 
